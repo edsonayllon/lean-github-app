@@ -173,9 +173,9 @@ final class Store: ObservableObject {
     }
 
     /// Asks GitHub who is signed in and which repositories are private. This is the only part that
-    /// uses the network without being asked, so it runs at most every ten minutes unless forced.
+    /// uses the network without being asked, so it runs at most every 15 seconds unless forced.
     func loadAccount(force: Bool) async {
-        if !force, let last = accountLoadedAt, Date().timeIntervalSince(last) < 600 { return }
+        if !force, let last = accountLoadedAt, Date().timeIntervalSince(last) < 15 { return }
         accountLoadedAt = Date()
         _ = await githubLogin()
         guard let remotes = try? await remoteRepos() else { return }
