@@ -44,15 +44,21 @@ struct SheetFrame<Content: View>: View {
             HStack(spacing: 8) {
                 if busy {
                     ProgressView().controlSize(.small)
-                    Text(busyText).font(.system(size: 13)).foregroundStyle(Theme.secondary)
+                    Text(busyText)
+                        .font(.system(size: 13))
+                        .foregroundStyle(Theme.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
                 }
-                Spacer()
+                Spacer(minLength: 8)
                 Button("Cancel") { dismiss() }
                     .buttonStyle(SecondaryButtonStyle())
                     .keyboardShortcut(.cancelAction)
                     .disabled(busy)
+                    .fixedSize()
                 Button(confirm) { run() }
                     .buttonStyle(PrimaryButtonStyle())
+                    .fixedSize()
                     .keyboardShortcut(.defaultAction)
                     .disabled(busy || !canConfirm)
             }
