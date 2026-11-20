@@ -172,7 +172,7 @@ struct Sidebar: View {
         }
         .simultaneousGesture(TapGesture(count: 2).onEnded { store.openInEditor(repo) })
         .contextMenu {
-            Button("Open in Visual Studio Code") { store.openInEditor(repo) }
+            Button("Open in \(store.editorName)") { store.openInEditor(repo) }
             Button("Show in Finder") { store.revealInFinder(repo) }
             Button("Open in Terminal") { store.openInTerminal(repo) }
             if repo.webURL != nil {
@@ -244,12 +244,14 @@ struct SidebarEmpty: View {
 // MARK: Detail
 
 struct EmptyDetail: View {
+    @EnvironmentObject var store: Store
+
     var body: some View {
         VStack(spacing: 12) {
             Image(systemName: "book.closed")
                 .font(.system(size: 28, weight: .light))
                 .foregroundStyle(Theme.tertiary)
-            Text("Select a repository, or double-click one\nto open it in Visual Studio Code.")
+            Text("Select a repository, or double-click one\nto open it in \(store.editorName).")
                 .font(.system(size: 14))
                 .foregroundStyle(Theme.secondary)
                 .multilineTextAlignment(.center)
@@ -329,7 +331,7 @@ struct RepoDetail: View {
             Button { store.openInEditor(repo) } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "chevron.left.forwardslash.chevron.right")
-                    Text("Open in VS Code")
+                    Text("Open in \(store.editorShortName)")
                 }
             }
             .buttonStyle(PrimaryButtonStyle())

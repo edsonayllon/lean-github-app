@@ -9,7 +9,7 @@ GitHub Desktop is mostly used for, in about 50 MB of memory instead of 1 GB:
 - Clone one of your GitHub repositories, or any URL.
 - Add an existing repository that lives somewhere else.
 - Publish a local repository to GitHub.
-- Open a repository in Visual Studio Code, Finder, Terminal or on GitHub.
+- Open a repository in your editor (Visual Studio Code unless you choose another), Finder, Terminal or on GitHub.
 - Move a repository's folder to the Trash, with a warning if it holds work that isn't on GitHub.
 
 It has no commit, diff or branch UI; that's left to the editor.
@@ -37,14 +37,14 @@ Without `--install` the app is left in `build/`.
 | Clone repository           | ⇧⌘O   |
 | Add existing repository    | ⌘O    |
 | Filter                     | ⌘F    |
-| Open in Visual Studio Code | ⇧⌘A, or double-click, or Return |
+| Open in editor             | ⇧⌘A, or double-click, or Return |
 | Show in Finder             | ⇧⌘F   |
 | View on GitHub             | ⇧⌘G   |
 | Publish to GitHub          | ⌘P    |
 | Move to Trash              | ⌘⌫    |
 | Refresh                    | ⌘R    |
 
-The repositories folder can be changed in Settings (⌘,).
+The repositories folder and the editor can be changed in Settings (⌘,).
 
 ## License
 

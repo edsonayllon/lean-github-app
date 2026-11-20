@@ -22,6 +22,13 @@ final class RepoTests: XCTestCase {
         XCTAssertEqual("  moon IG bot! ".asGitHubName, "moon-IG-bot")
         XCTAssertEqual("velay_docs.v2".asGitHubName, "velay_docs.v2")
     }
+
+    func testEditorNames() {
+        XCTAssertEqual("Lean Code.app".removingSuffix(".app"), "Lean Code")
+        XCTAssertEqual("Lean Code".removingSuffix(".app"), "Lean Code")
+        XCTAssertEqual("Visual Studio Code".shortEditorName, "VS Code")
+        XCTAssertEqual("Lean Code".shortEditorName, "Lean Code")
+    }
 }
 
 @MainActor

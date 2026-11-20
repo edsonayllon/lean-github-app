@@ -140,4 +140,11 @@ extension String {
     }
 
     var abbreviatingHome: String { (self as NSString).abbreviatingWithTildeInPath }
+
+    func removingSuffix(_ suffix: String) -> String {
+        hasSuffix(suffix) ? String(dropLast(suffix.count)) : self
+    }
+
+    /// "Visual Studio Code" → "VS Code"; other app names stay as they are.
+    var shortEditorName: String { self == "Visual Studio Code" ? "VS Code" : self }
 }

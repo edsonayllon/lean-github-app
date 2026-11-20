@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 enum SortMode: String, CaseIterable, Identifiable {
     case recent = "Recent Activity"
@@ -24,7 +25,7 @@ enum SheetKind: Identifiable {
 @MainActor
 final class Store: ObservableObject {
     static let defaultRoot = NSHomeDirectory() + "/Documents/GitHub"
-    static let editorBundleID = "com.microsoft.VSCode"
+    static let defaultEditorID = "com.microsoft.VSCode"
 
     @Published var repos: [Repo] = []
     @Published var selection: String? {
@@ -54,6 +55,11 @@ final class Store: ObservableObject {
         }
     }
 
+    /// Bundle identifier of the app that "Open in Editor" uses. Stored by ID so it survives the app moving.
+    @Published var editorID: String {
+        didSet { UserDefaults.standard.set(editorID, forKey: "editorID") }
+    }
+
     private var externalPaths: [String] {
         didSet { UserDefaults.standard.set(externalPaths, forKey: "externalPaths") }
     }
@@ -66,6 +72,7 @@ final class Store: ObservableObject {
         externalPaths = defaults.stringArray(forKey: "externalPaths") ?? []
         sort = SortMode(rawValue: defaults.string(forKey: "sort") ?? "") ?? .recent
         privacy = defaults.dictionary(forKey: "privacy") as? [String: Bool] ?? [:]
+        editorID = defaults.string(forKey: "editorID") ?? Store.defaultEditorID
     }
 
     // MARK: Reading
@@ -366,12 +373,41 @@ final class Store: ObservableObject {
 
     // MARK: Opening
 
+    var editorURL: URL? { NSWorkspace.shared.urlForApplication(withBundleIdentifier: editorID) }
+
+    /// The editor's name as Finder shows it, e.g. "Visual Studio Code" or "Lean Code".
+    var editorName: String {
+        guard let url = editorURL else { return editorID == Store.defaultEditorID ? "Visual Studio Code" : editorID }
+        return FileManager.default.displayName(atPath: url.path).removingSuffix(".app")
+    }
+
+    /// For tight spots like the primary button.
+    var editorShortName: String { editorName.shortEditorName }
+
     func openInEditor(_ repo: Repo) {
-        guard let app = NSWorkspace.shared.urlForApplication(withBundleIdentifier: Store.editorBundleID) else {
-            error = AppError(title: "Visual Studio Code isn't installed", message: "Install it from code.visualstudio.com and try again.")
+        guard let app = editorURL else {
+            error = editorID == Store.defaultEditorID
+                ? AppError(title: "Visual Studio Code isn't installed", message: "Install it from code.visualstudio.com, or choose another editor in Settings.")
+                : AppError(title: "\(editorName) isn't installed", message: "Choose another editor in Settings.")
             return
         }
         NSWorkspace.shared.open([URL(fileURLWithPath: repo.path)], withApplicationAt: app, configuration: NSWorkspace.OpenConfiguration())
+    }
+
+    func chooseEditor() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowedContentTypes = [.application]
+        panel.prompt = "Use This App"
+        panel.message = "Choose the app that opens your repositories."
+        panel.directoryURL = URL(fileURLWithPath: "/Applications")
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        guard let id = Bundle(url: url)?.bundleIdentifier else {
+            error = AppError(title: "Can't use that app", message: "“\(url.lastPathComponent)” has no bundle identifier.")
+            return
+        }
+        editorID = id
     }
 
     func revealInFinder(_ repo: Repo) {

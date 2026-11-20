@@ -25,7 +25,7 @@ struct LeanGitHubApp: App {
                     .keyboardShortcut("f")
             }
             CommandMenu("Repository") {
-                Button("Open in Visual Studio Code") { store.selected.map(store.openInEditor) }
+                Button("Open in \(store.editorName)") { store.selected.map(store.openInEditor) }
                     .keyboardShortcut("a", modifiers: [.command, .shift])
                     .disabled(store.selected == nil)
                 Button("Show in Finder") { store.selected.map(store.revealInFinder) }
@@ -72,6 +72,23 @@ struct SettingsView: View {
                         .lineLimit(1)
                         .truncationMode(.middle)
                     Button("Choose…") { store.chooseRoot() }
+                }
+            }
+            LabeledContent("Editor") {
+                HStack {
+                    if let url = store.editorURL {
+                        Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+                            .resizable()
+                            .frame(width: 16, height: 16)
+                    }
+                    Text(store.editorName)
+                        .foregroundStyle(store.editorURL == nil ? .red : .secondary)
+                        .lineLimit(1)
+                    Button("Choose…") { store.chooseEditor() }
+                    if store.editorID != Store.defaultEditorID {
+                        Button("Reset") { store.editorID = Store.defaultEditorID }
+                            .help("Use Visual Studio Code")
+                    }
                 }
             }
         }
