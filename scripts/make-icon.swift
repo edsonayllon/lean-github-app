@@ -1,4 +1,5 @@
-// Draws the app icon and writes it as a 1024 px PNG. Usage: swift scripts/make-icon.swift out.png
+// Draws the app icon: a git branch on a near-black tile, in the same style as Process Code's icon
+// (off-white glyph, periwinkle accent). Usage: swift scripts/make-icon.swift out.png
 import AppKit
 
 let size: CGFloat = 1024
@@ -10,18 +11,21 @@ let rep = NSBitmapImageRep(
 )!
 NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
 
-// The standard macOS icon plate: 824 px rounded square centred on a 1024 px canvas.
+// The tile, inset as macOS icons are, with a faint edge so it holds on dark backgrounds.
 let plate = NSRect(x: 100, y: 100, width: 824, height: 824)
-let shape = NSBezierPath(roundedRect: plate, xRadius: 186, yRadius: 186)
+let shape = NSBezierPath(roundedRect: plate, xRadius: 185, yRadius: 185)
 NSGradient(
-    starting: NSColor(srgbRed: 0.16, green: 0.19, blue: 0.24, alpha: 1),
-    ending: NSColor(srgbRed: 0.05, green: 0.07, blue: 0.09, alpha: 1)
+    starting: NSColor(srgbRed: 0.09, green: 0.10, blue: 0.095, alpha: 1),
+    ending: NSColor(srgbRed: 0.04, green: 0.045, blue: 0.04, alpha: 1)
 )!.draw(in: shape, angle: -90)
+NSColor(white: 1, alpha: 0.10).setStroke()
+shape.lineWidth = 6
+shape.stroke()
 
-// A branch: trunk on the left, one branch curving off to the right.
-let white = NSColor.white
-let green = NSColor(srgbRed: 0.25, green: 0.73, blue: 0.31, alpha: 1)
-let stroke: CGFloat = 56
+// A branch: trunk on the left, one branch curving off to the right, its tip in Claude Code's periwinkle.
+let white = NSColor(srgbRed: 0.90, green: 0.91, blue: 0.905, alpha: 1)
+let accent = NSColor(srgbRed: 0.694, green: 0.725, blue: 0.976, alpha: 1)
+let stroke: CGFloat = 64
 let trunkX: CGFloat = 392, branchX: CGFloat = 632
 let top: CGFloat = 700, bottom: CGFloat = 324, branchY: CGFloat = 620
 
@@ -46,7 +50,7 @@ func node(_ x: CGFloat, _ y: CGFloat, _ color: NSColor) {
 }
 node(trunkX, top, white)
 node(trunkX, bottom, white)
-node(branchX, branchY, green)
+node(branchX, branchY, accent)
 
 NSGraphicsContext.current?.flushGraphics()
 try! rep.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: out))
