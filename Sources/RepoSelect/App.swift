@@ -74,26 +74,48 @@ struct SettingsView: View {
                     Button("Choose…") { store.chooseRoot() }
                 }
             }
-            LabeledContent("Editor") {
-                HStack {
-                    if let url = store.editorURL {
-                        Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
-                            .resizable()
-                            .frame(width: 16, height: 16)
+            Picker("Editor", selection: editorSelection) {
+                ForEach(store.editorOptions, id: \.self) { id in
+                    Label {
+                        Text(Store.appURL(id) == nil ? "\(Store.appName(id)) (not installed)" : Store.appName(id))
+                    } icon: {
+                        Image(nsImage: Self.icon(for: id))
                     }
-                    Text(store.editorName)
-                        .foregroundStyle(store.editorURL == nil ? .red : .secondary)
-                        .lineLimit(1)
-                    Button("Choose…") { store.chooseEditor() }
-                    if store.editorID != Store.defaultEditorID {
-                        Button("Reset") { store.editorID = Store.defaultEditorID }
-                            .help("Use Visual Studio Code")
-                    }
+                    .tag(id)
                 }
+                Divider()
+                Text("Other…").tag(Self.otherTag)
             }
         }
         .formStyle(.grouped)
+        .onAppear { store.findEditors() }
         .frame(width: 480)
         .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private static let otherTag = "\u{0}other"
+
+    /// Picking "Other…" opens the app chooser instead of becoming the selection.
+    private var editorSelection: Binding<String> {
+        Binding(
+            get: { store.editorID },
+            set: { id in
+                if id == Self.otherTag {
+                    // Let the menu close before the open panel runs modally.
+                    DispatchQueue.main.async { store.chooseEditor() }
+                } else {
+                    store.chosenEditorID = id
+                }
+            }
+        )
+    }
+
+    private static func icon(for bundleID: String) -> NSImage {
+        let image = Store.appURL(bundleID).map { NSWorkspace.shared.icon(forFile: $0.path) }
+            ?? NSImage(systemSymbolName: "questionmark.app", accessibilityDescription: nil)
+            ?? NSImage()
+        let sized = image.copy() as! NSImage
+        sized.size = NSSize(width: 16, height: 16)
+        return sized
     }
 }

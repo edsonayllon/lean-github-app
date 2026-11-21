@@ -1,4 +1,5 @@
 import AppKit
+import CoreServices
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -25,7 +26,8 @@ enum SheetKind: Identifiable {
 @MainActor
 final class Store: ObservableObject {
     static let defaultRoot = NSHomeDirectory() + "/Documents/GitHub"
-    static let defaultEditorID = "com.microsoft.VSCode"
+    /// Used only when no editor is installed, so the error can name one to install.
+    static let fallbackEditorID = "com.microsoft.VSCode"
 
     @Published var repos: [Repo] = []
     @Published var selection: String? {
@@ -55,10 +57,16 @@ final class Store: ObservableObject {
         }
     }
 
-    /// Bundle identifier of the app that "Open in Editor" uses. Stored by ID so it survives the app moving.
-    @Published var editorID: String {
-        didSet { UserDefaults.standard.set(editorID, forKey: "editorID") }
+    /// The editor the user picked in Settings, by bundle ID so it survives the app moving. Nil until they pick
+    /// one, so the default keeps following the editor they actually use.
+    @Published var chosenEditorID: String? {
+        didSet { UserDefaults.standard.set(chosenEditorID, forKey: "editorID") }
     }
+    /// Installed editors, the most recently used first.
+    @Published private(set) var installedEditors: [String] = []
+
+    /// Bundle ID of the app that "Open in Editor" uses.
+    var editorID: String { chosenEditorID ?? installedEditors.first ?? Store.fallbackEditorID }
 
     private var externalPaths: [String] {
         didSet { UserDefaults.standard.set(externalPaths, forKey: "externalPaths") }
@@ -72,7 +80,8 @@ final class Store: ObservableObject {
         externalPaths = defaults.stringArray(forKey: "externalPaths") ?? []
         sort = SortMode(rawValue: defaults.string(forKey: "sort") ?? "") ?? .recent
         privacy = defaults.dictionary(forKey: "privacy") as? [String: Bool] ?? [:]
-        editorID = defaults.string(forKey: "editorID") ?? Store.defaultEditorID
+        chosenEditorID = defaults.string(forKey: "editorID")
+        findEditors()
     }
 
     // MARK: Reading
@@ -373,21 +382,85 @@ final class Store: ObservableObject {
 
     // MARK: Opening
 
-    var editorURL: URL? { NSWorkspace.shared.urlForApplication(withBundleIdentifier: editorID) }
+    /// Editors found by bundle ID. Others are found by declaring they open source code (see `findEditors`).
+    static let knownEditorIDs = [
+        "com.microsoft.VSCode",
+        "com.microsoft.VSCodeInsiders",
+        "com.vscodium",
+        "com.todesktop.230313mzl4w4u92", // Cursor
+        "com.exafunction.windsurf",
+        "dev.zed.Zed",
+        "com.t3tools.t3code", // T3 Code (unverified: its Mac ID isn't published)
+        "com.sublimetext.4",
+        "com.panic.Nova",
+        "com.barebones.bbedit",
+        "com.apple.dt.Xcode",
+    ]
+    /// Developer tools that open source code but aren't where you'd open a repository.
+    static let notEditors: Set<String> = ["com.anthropic.claudefordesktop", "com.apple.dt.Instruments"]
+    static let xcodeID = "com.apple.dt.Xcode"
 
-    /// The editor's name as Finder shows it, e.g. "Visual Studio Code" or "Lean Code".
-    var editorName: String {
-        guard let url = editorURL else { return editorID == Store.defaultEditorID ? "Visual Studio Code" : editorID }
+    /// Finds the installed editors: the known ones, plus any developer tool that opens source code. Ranks them by
+    /// when Spotlight says each was last used, with Xcode last since it's usually opened for one kind of project.
+    func findEditors() {
+        let workspace = NSWorkspace.shared
+        var editors: [String: URL] = [:]
+        for id in Store.knownEditorIDs {
+            if let url = workspace.urlForApplication(withBundleIdentifier: id) { editors[id] = url }
+        }
+        for url in workspace.urlsForApplications(toOpen: .sourceCode) {
+            guard let bundle = Bundle(url: url), let id = bundle.bundleIdentifier, editors[id] == nil,
+                  !Store.notEditors.contains(id),
+                  bundle.object(forInfoDictionaryKey: "LSApplicationCategoryType") as? String
+                      == "public.app-category.developer-tools"
+            else { continue }
+            editors[id] = workspace.urlForApplication(withBundleIdentifier: id) ?? url
+        }
+        installedEditors = editors
+            .map { (id: $0.key, used: Store.lastUsed($0.value)) }
+            .sorted { a, b in
+                if (a.id == Store.xcodeID) != (b.id == Store.xcodeID) { return b.id == Store.xcodeID }
+                if a.used != b.used { return a.used > b.used }
+                return a.id < b.id
+            }
+            .map(\.id)
+    }
+
+    static func lastUsed(_ app: URL) -> Date {
+        guard let item = MDItemCreateWithURL(nil, app as CFURL),
+              let date = MDItemCopyAttribute(item, kMDItemLastUsedDate) as? Date
+        else { return .distantPast }
+        return date
+    }
+
+    /// Settings' menu: the installed editors, plus the current choice if it isn't installed, by name.
+    var editorOptions: [String] {
+        var ids = installedEditors
+        if !ids.contains(editorID) { ids.append(editorID) }
+        return ids.sorted { Store.appName($0).localizedStandardCompare(Store.appName($1)) == .orderedAscending }
+    }
+
+    static func appURL(_ bundleID: String) -> URL? {
+        NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID)
+    }
+
+    /// An app's name as Finder shows it, e.g. "Visual Studio Code" or "Process Code".
+    static func appName(_ bundleID: String) -> String {
+        guard let url = appURL(bundleID) else { return bundleID == fallbackEditorID ? "Visual Studio Code" : bundleID }
         return FileManager.default.displayName(atPath: url.path).removingSuffix(".app")
     }
+
+    var editorURL: URL? { Store.appURL(editorID) }
+
+    var editorName: String { Store.appName(editorID) }
 
     /// For tight spots like the primary button.
     var editorShortName: String { editorName.shortEditorName }
 
     func openInEditor(_ repo: Repo) {
         guard let app = editorURL else {
-            error = editorID == Store.defaultEditorID
-                ? AppError(title: "Visual Studio Code isn't installed", message: "Install it from code.visualstudio.com, or choose another editor in Settings.")
+            error = chosenEditorID == nil
+                ? AppError(title: "No editor found", message: "Choose the app that opens your repositories in Settings, or install one such as Visual Studio Code.")
                 : AppError(title: "\(editorName) isn't installed", message: "Choose another editor in Settings.")
             return
         }
@@ -407,7 +480,7 @@ final class Store: ObservableObject {
             error = AppError(title: "Can't use that app", message: "“\(url.lastPathComponent)” has no bundle identifier.")
             return
         }
-        editorID = id
+        chosenEditorID = id
     }
 
     func revealInFinder(_ repo: Repo) {

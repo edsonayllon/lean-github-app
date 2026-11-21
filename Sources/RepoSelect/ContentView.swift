@@ -46,6 +46,7 @@ struct ContentView: View {
             await store.loadAccount(force: true)
         }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            store.findEditors()
             Task {
                 await store.refresh()
                 await store.loadAccount(force: false)
