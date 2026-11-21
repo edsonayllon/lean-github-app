@@ -41,15 +41,19 @@ Without `--install` the app is left in `build/`.
 ## Releasing
 
 ```sh
+gh pr create --base release --head main --fill && gh pr merge main --merge   # bring main into release
+git switch release && git pull
 ./scripts/release.sh --dry-run   # the version and notes the commits since the last tag would give
 ./scripts/release.sh             # test, build, notarise, tag vX.Y.Z and publish the DMG on GitHub
+git switch main
 ```
 
-Releases are cut on this Mac from `main` with [semantic-release](https://semantic-release.gitbook.io), not in
+Releases are cut on this Mac from the `release` branch with [semantic-release](https://semantic-release.gitbook.io), not in
 GitHub Actions, because signing and notarising need the Mac's keychain. The commit messages since the last tag
 decide the version: a `fix:` makes a patch, a `feat:` a minor and a breaking change a major; with only `docs:`,
 `chore:` and the like there is nothing to release. It needs Node 24.10 or later and a logged-in GitHub CLI.
-`main` has to be clean and pushed.
+Work lands on `main` and reaches `release` only through a pull request from `main`; `release` has to be clean
+and match GitHub.
 
 The build step is `./scripts/build-app.sh --release`, which builds the app for both architectures, signs it
 with a Developer ID Application certificate, packs it into `build/RepoSelect.dmg`, has Apple notarise it,
