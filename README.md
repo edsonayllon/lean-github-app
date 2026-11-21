@@ -1,7 +1,7 @@
 # Repo Select
 
 A small native Mac app that manages the repositories in `~/Documents/GitHub`. It does the handful of things
-GitHub Desktop is mostly used for, in about 50 MB of memory instead of 1 GB:
+GitHub Desktop is mostly used for, in a 3.4 MB app instead of a 1.1 GB one, and runs in about 50 MB of memory:
 
 - List and filter your repositories, with branch, uncommitted changes, what's waiting to push or pull, and
   whether each one is private or public.
