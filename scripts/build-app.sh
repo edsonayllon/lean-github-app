@@ -1,15 +1,15 @@
 #!/bin/bash
-# Builds "Lean GitHub.app" into build/. Pass --install to also copy it to /Applications.
+# Builds "Repo Select.app" into build/. Pass --install to also copy it to /Applications.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-APP_NAME="Lean GitHub"
-BUNDLE_ID="com.leangithub.app"
+APP_NAME="Repo Select"
+BUNDLE_ID="com.reposelect.app"
 VERSION="1.0.0"
 APP="build/$APP_NAME.app"
 
 swift build -c release
-BIN="$(swift build -c release --show-bin-path)/LeanGitHub"
+BIN="$(swift build -c release --show-bin-path)/RepoSelect"
 
 # The icon is drawn by a script and kept in the repo; redraw it only if it's missing.
 if [ ! -f Resources/AppIcon.icns ]; then
@@ -26,7 +26,7 @@ fi
 
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp "$BIN" "$APP/Contents/MacOS/LeanGitHub"
+cp "$BIN" "$APP/Contents/MacOS/RepoSelect"
 cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 
 cat > "$APP/Contents/Info.plist" <<PLIST
@@ -37,7 +37,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>CFBundleName</key><string>$APP_NAME</string>
   <key>CFBundleDisplayName</key><string>$APP_NAME</string>
   <key>CFBundleIdentifier</key><string>$BUNDLE_ID</string>
-  <key>CFBundleExecutable</key><string>LeanGitHub</string>
+  <key>CFBundleExecutable</key><string>RepoSelect</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>$VERSION</string>
@@ -45,9 +45,9 @@ cat > "$APP/Contents/Info.plist" <<PLIST
   <key>LSMinimumSystemVersion</key><string>14.0</string>
   <key>LSApplicationCategoryType</key><string>public.app-category.developer-tools</string>
   <key>NSHighResolutionCapable</key><true/>
-  <key>NSDocumentsFolderUsageDescription</key><string>Lean GitHub lists and manages the repositories in your GitHub folder.</string>
-  <key>NSDesktopFolderUsageDescription</key><string>Lean GitHub needs access to add a repository stored on your Desktop.</string>
-  <key>NSDownloadsFolderUsageDescription</key><string>Lean GitHub needs access to add a repository stored in Downloads.</string>
+  <key>NSDocumentsFolderUsageDescription</key><string>Repo Select lists and manages the repositories in your GitHub folder.</string>
+  <key>NSDesktopFolderUsageDescription</key><string>Repo Select needs access to add a repository stored on your Desktop.</string>
+  <key>NSDownloadsFolderUsageDescription</key><string>Repo Select needs access to add a repository stored in Downloads.</string>
 </dict>
 </plist>
 PLIST

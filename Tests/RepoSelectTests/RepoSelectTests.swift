@@ -1,5 +1,5 @@
 import XCTest
-@testable import LeanGitHub
+@testable import RepoSelect
 
 final class RepoTests: XCTestCase {
     func testRemoteFormsBecomeWebURLs() {
@@ -24,10 +24,10 @@ final class RepoTests: XCTestCase {
     }
 
     func testEditorNames() {
-        XCTAssertEqual("Lean Code.app".removingSuffix(".app"), "Lean Code")
-        XCTAssertEqual("Lean Code".removingSuffix(".app"), "Lean Code")
+        XCTAssertEqual("Process Code.app".removingSuffix(".app"), "Process Code")
+        XCTAssertEqual("Process Code".removingSuffix(".app"), "Process Code")
         XCTAssertEqual("Visual Studio Code".shortEditorName, "VS Code")
-        XCTAssertEqual("Lean Code".shortEditorName, "Lean Code")
+        XCTAssertEqual("Process Code".shortEditorName, "Process Code")
     }
 }
 
@@ -39,7 +39,7 @@ final class StoreTests: XCTestCase {
     override func setUp() async throws {
         // Resolve symlinks so paths match what the app sees (/var → /private/var).
         root = URL(fileURLWithPath: NSTemporaryDirectory()).resolvingSymlinksInPath()
-            .appendingPathComponent("lean-github-tests-\(UUID().uuidString)").path
+            .appendingPathComponent("repo-select-tests-\(UUID().uuidString)").path
         try FileManager.default.createDirectory(atPath: root, withIntermediateDirectories: true)
         try "not a repo".write(toFile: root + "/stray file.pdf", atomically: true, encoding: .utf8)
         store = Store()
@@ -113,7 +113,7 @@ final class StoreTests: XCTestCase {
 final class TrashTests: XCTestCase {
     func testMoveToTrashRemovesTheFolderAndWarnsAboutUnpublishedWork() async throws {
         let root = URL(fileURLWithPath: NSTemporaryDirectory()).resolvingSymlinksInPath()
-            .appendingPathComponent("lean-github-tests-\(UUID().uuidString)").path
+            .appendingPathComponent("repo-select-tests-\(UUID().uuidString)").path
         try FileManager.default.createDirectory(atPath: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(atPath: root) }
         let store = Store()

@@ -2,10 +2,10 @@
 import PackageDescription
 
 let package = Package(
-    name: "LeanGitHub",
+    name: "RepoSelect",
     platforms: [.macOS(.v14)],
     targets: [
-        .executableTarget(name: "LeanGitHub", path: "Sources/LeanGitHub"),
-        .testTarget(name: "LeanGitHubTests", dependencies: ["LeanGitHub"], path: "Tests/LeanGitHubTests"),
+        .executableTarget(name: "RepoSelect", path: "Sources/RepoSelect"),
+        .testTarget(name: "RepoSelectTests", dependencies: ["RepoSelect"], path: "Tests/RepoSelectTests"),
     ]
 )

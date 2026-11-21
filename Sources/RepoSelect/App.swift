@@ -1,11 +1,11 @@
 import SwiftUI
 
 @main
-struct LeanGitHubApp: App {
+struct RepoSelectApp: App {
     @StateObject private var store = Store()
 
     var body: some Scene {
-        Window("Lean GitHub", id: "main") {
+        Window("Repo Select", id: "main") {
             ContentView()
                 .environmentObject(store)
                 .frame(minWidth: 760, minHeight: 460)

@@ -1,4 +1,4 @@
-# Lean GitHub
+# Repo Select
 
 A small native Mac app that manages the repositories in `~/Documents/GitHub`. It does the handful of things
 GitHub Desktop is mostly used for, in about 50 MB of memory instead of 1 GB:
@@ -23,7 +23,7 @@ It has no commit, diff or branch UI; that's left to the editor.
 ## Build and install
 
 ```sh
-./scripts/build-app.sh --install   # builds and copies Lean GitHub.app to /Applications
+./scripts/build-app.sh --install   # builds and copies Repo Select.app to /Applications
 swift test                         # runs the tests
 ```
 
